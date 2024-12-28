@@ -1,0 +1,437 @@
+body {
+    font-family: 'Noto Sans SC', Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.page-container {
+    display: grid;
+    grid-template-columns: minmax(300px, 45%) 1fr;
+    gap: 2rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+    box-sizing: border-box;
+}
+
+.input-container {
+    text-align: center;
+    background: white;
+    padding: 20px 1rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+h1 {
+    color: #333;
+}
+
+textarea {
+    width: 100%;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+textarea:focus {
+    outline: 2px solid #007BFF;
+    border-color: transparent;
+}
+
+button {
+    padding: 12px 24px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+button:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+#loading {
+    margin: 1.5rem 0;
+    color: #666;
+    font-size: 16px;
+}
+
+#error {
+    color: #dc3545;
+    margin: 1.5rem 0;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background-color: #fde8e8;
+    font-size: 16px;
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    button {
+        width: 100%;
+    }
+    
+    #hiddenHtml .paper {
+        width: 95%;
+        height: auto;
+        padding: 20px;
+    }
+}
+
+#outputImageContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#outputImageContainer img {
+    max-width: 100%;
+    height: auto;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(149, 157, 165, 0.1);
+}
+
+.download-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #7bc77b;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+    font-size: 14px;
+}
+
+.download-btn:hover {
+    background-color: #489c5b;
+}
+
+#hiddenHtml {
+    width: 400px;
+    height: auto;
+    background-color: transparent;
+    position: absolute;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+    z-index: -1;
+}
+
+#hiddenHtml.horizontal {
+    width: 840px;
+}
+
+#hiddenHtml .paper {
+    width: 360px;
+    min-height: 200px;
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    margin: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+    border: none;
+    box-shadow: 0 2px 12px rgba(149, 157, 165, 0.1);
+}
+
+#hiddenHtml .paper .markdown-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+#hiddenHtml .paper h1 {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#hiddenHtml .paper h2 {
+    font-size: 18px;
+}
+
+#hiddenHtml .paper p {
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+#hiddenHtml .paper ul, 
+#hiddenHtml .paper ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+#hiddenHtml .paper blockquote {
+    border-left: 4px solid #ccc;
+    padding-left: 16px;
+    color: #666;
+    margin: 16px 0;
+}
+
+#hiddenHtml .paper code {
+    background-color: #f5f5f5;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+#hiddenHtml .paper pre {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+#hiddenHtml .markdown-content {
+    font-family: 'Noto Sans SC', Arial, sans-serif;
+    color: #333;
+}
+
+/* 添加设置面板的样式 */
+.settings-panel {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.settings-panel h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.settings-group {
+    display: grid;
+    gap: 12px;
+}
+
+.settings-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+.settings-group input[type="range"] {
+    flex: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    outline: none;
+}
+
+.settings-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #007BFF;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.settings-group .value-display {
+    min-width: 40px;
+    text-align: right;
+    font-family: monospace;
+}
+
+@media (max-width: 768px) {
+    .settings-group label {
+        font-size: 12px;
+    }
+    
+    .settings-group .value-display {
+        min-width: 30px;
+    }
+}
+
+/* Advanced 按钮和设置面板样式 */
+.advanced-settings {
+    position: relative;
+    z-index: 100;
+}
+
+.advanced-btn {
+    background-color: #f8f9fa !important;
+    color: #333 !important;
+    border: 1px solid #ddd !important;
+    white-space: nowrap;
+}
+
+.advanced-btn:hover {
+    background: #e9ecef;
+}
+
+.settings-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 300px;
+    z-index: 101;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1rem 0;
+    width: 100%;
+    max-width: 600px;
+}
+
+.button-group button {
+    flex: 1;
+    min-width: 160px;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.button-group > button,
+.button-group > div {
+    flex: 1;
+}
+
+.output-mode button,
+.advanced-settings button {
+    width: 100%;
+    min-width: 160px;
+}
+
+@media (max-width: 768px) {
+    .button-group {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .button-group button {
+        font-size: 14px;
+        min-width: 120px;
+    }
+}
+
+/* 输出模式选择样式 */
+.output-mode {
+    position: relative;
+    z-index: 100;
+}
+
+.mode-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 200px;
+    z-index: 101;
+}
+
+.mode-option {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mode-option:hover {
+    background: #e9ecef;
+}
+
+.mode-option span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.mode-option small {
+    font-size: 12px;
+    color: #666;
+}
+
+.mode-option.active {
+    background: #e3f2fd;
+    color: #0056b3;
+}
+
+/* 水平模式样式 */
+#hiddenHtml.horizontal .paper {
+    width: 800px;
+    min-height: 200px;
+    margin: 20px;
+    padding: 40px;
+    border: none;
+}
+
+/* 垂直模式样式 */
+#hiddenHtml.vertical .paper {
+    width: 360px;
+    min-height: 200px;
+    margin: 20px;
+    padding: 20px;
+    border: none;
+}

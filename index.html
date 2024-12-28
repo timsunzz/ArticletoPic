@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本转图像转换器</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="input-container">
+            <h1>文本转图像转换器</h1>
+            <textarea 
+                id="inputText" 
+                rows="10" 
+                cols="50" 
+                placeholder="请输入您的文本..."
+                aria-label="文本输入区域"></textarea>
+            <div class="button-group">
+                <button id="convertButton" aria-label="将文本转换为图像">转换为图像</button>
+                <div class="output-mode">
+                    <button id="outputModeBtn" class="advanced-btn">输出模式 ▼</button>
+                    <div class="mode-panel hidden">
+                        <div class="mode-option" data-mode="horizontal">
+                            <span>🖥️ 电脑模式</span>
+                            <small>适合电脑阅读</small>
+                        </div>
+                        <div class="mode-option" data-mode="vertical">
+                            <span>📱 手机模式</span>
+                            <small>适合手机阅读</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="advanced-settings">
+                    <button id="advancedBtn" class="advanced-btn">Advanced ▼</button>
+                    <div class="settings-panel hidden">
+                        <h3>图像效果设置</h3>
+                        <div class="settings-group">
+                            <label>
+                                噪点强度
+                                <input type="range" id="noiseStrength" min="0" max="20" value="10" step="1">
+                                <span class="value-display">10</span>
+                            </label>
+                            
+                            <label>
+                                细线数量
+                                <input type="range" id="lineCount" min="0" max="200" value="50" step="5">
+                                <span class="value-display">50</span>
+                            </label>
+                            
+                            <label>
+                                细线透明度
+                                <input type="range" id="lineOpacity" min="0" max="100" value="10" step="5">
+                                <span class="value-display">0.1</span>
+                            </label>
+                            
+                            <label>
+                                波纹强度
+                                <input type="range" id="distortionStrength" min="0" max="5" value="1.5" step="0.1">
+                                <span class="value-display">1.5</span>
+                            </label>
+                            
+                            <label>
+                                波纹频率
+                                <input type="range" id="distortionFrequency" min="0" max="0.05" value="0.01" step="0.001">
+                                <span class="value-display">0.01</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="loading" class="hidden">正在转换...</div>
+            <div id="error" class="hidden"></div>
+        </div>
+        <div class="output-container">
+            <div id="outputImageContainer" aria-live="polite"></div>
+        </div>
+    </div>
+    <div id="hiddenHtml"></div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

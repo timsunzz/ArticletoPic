@@ -78,32 +78,113 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
+     * 计算文本在容器中的高度
+     * @param {HTMLElement} container 
+     * @param {string} html 
+     * @returns {number}
+     */
+    function calculateContentHeight(container, html) {
+        const testDiv = document.createElement('div');
+        testDiv.innerHTML = html;
+        testDiv.style.cssText = window.getComputedStyle(container).cssText;
+        testDiv.style.position = 'absolute';
+        testDiv.style.visibility = 'hidden';
+        document.body.appendChild(testDiv);
+        const height = testDiv.offsetHeight;
+        document.body.removeChild(testDiv);
+        return height;
+    }
+
+    /**
+     * 将长文本分割成多个页面
+     * @param {string} html 
+     * @returns {string[]}
+     */
+    async function splitIntoPages(html) {
+        const maxHeight = 720; // 考虑内边距后的可用高度
+        const pages = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const elements = Array.from(doc.body.children);
+        
+        let currentPage = '';
+        let currentHeight = 0;
+        
+        for (const element of elements) {
+            const elementHtml = element.outerHTML;
+            const testContainer = document.createElement('div');
+            testContainer.className = 'paper';
+            const elementHeight = calculateContentHeight(testContainer, elementHtml);
+            
+            if (currentHeight + elementHeight > maxHeight) {
+                if (currentPage) {
+                    pages.push(currentPage);
+                }
+                currentPage = elementHtml;
+                currentHeight = elementHeight;
+            } else {
+                currentPage += elementHtml;
+                currentHeight += elementHeight;
+            }
+        }
+        
+        if (currentPage) {
+            pages.push(currentPage);
+        }
+        
+        return pages;
+    }
+
+    /**
      * 将HTML转换为图像
      * @param {string} html 
      */
     async function convertHtmlToImage(html) {
         console.log("开始转换HTML到图像...");
+        if (currentMode === 'xiaohongshu') {
+            const pages = XHSMode.splitPages(html);
+            const images = await Promise.all(
+                pages.map(page => XHSMode.generateImage(page))
+            );
+            XHSMode.showPreview(images, outputImageContainer);
+            return;
+        }
+
         const hiddenDiv = document.getElementById('hiddenHtml');
         hiddenDiv.className = currentMode;
         hiddenDiv.innerHTML = `<div class="paper">${html}</div>`;
 
-        adjustHeight(hiddenDiv);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // 获取实际内容的尺寸
+        const paper = hiddenDiv.querySelector('.paper');
+        const paperWidth = currentMode === 'horizontal' ? 800 : 400;
+        const paperHeight = paper.scrollHeight;
+        
+        // 计算外部容器尺寸（添加边距）
+        const margin = 20;  // 统一设置边距为20px
+        const containerWidth = paperWidth + (margin * 2);  // 两侧边距
+        const containerHeight = paperHeight + (margin * 2);  // 上下边距
 
         try {
             const canvas = await html2canvas(hiddenDiv, {
                 useCORS: true,
                 logging: true,
                 scale: 2,
-                width: currentMode === 'horizontal' ? 800 : 400,
-                height: hiddenDiv.scrollHeight,
-                backgroundColor: '#E3F2FD',  // 生成图片的外层背景色（奶油蓝色）
+                width: containerWidth,
+                height: containerHeight,
+                backgroundColor: '#E3F2FD',
                 onclone: function(clonedDoc) {
                     const clonedDiv = clonedDoc.getElementById('hiddenHtml');
                     clonedDiv.style.visibility = 'visible';
                     clonedDiv.style.position = 'absolute';
                     clonedDiv.style.top = '0';
                     clonedDiv.style.left = '0';
+                    // 确保克隆的元素也使用正确的尺寸
+                    clonedDiv.style.width = containerWidth + 'px';
+                    clonedDiv.style.height = containerHeight + 'px';
+                    // 确保内容居中
+                    const paperDiv = clonedDiv.querySelector('.paper');
+                    paperDiv.style.width = paperWidth + 'px';
+                    paperDiv.style.margin = `${margin}px`;
                 }
             });
 
@@ -175,14 +256,59 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function displayImage(imageUrl) {
         outputImageContainer.innerHTML = '';
-        const img = document.createElement('img');
-        img.src = imageUrl;
-        img.alt = '生成的文本图像';
-        outputImageContainer.appendChild(img);
+        if (Array.isArray(imageUrl)) {
+            // 创建小红书模式的容器
+            const container = document.createElement('div');
+            container.className = 'xiaohongshu-container';
+            
+            // 创建页码指示器
+            const indicator = document.createElement('div');
+            indicator.className = 'page-indicator';
+            
+            // 添加所有图片和页码点
+            imageUrl.forEach((url, index) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `第 ${index + 1} 页`;
+                container.appendChild(img);
+                
+                const dot = document.createElement('div');
+                dot.className = `page-dot ${index === 0 ? 'active' : ''}`;
+                dot.addEventListener('click', () => {
+                    container.scrollTo({
+                        left: img.offsetLeft - container.offsetLeft,
+                        behavior: 'smooth'
+                    });
+                });
+                indicator.appendChild(dot);
+            });
+            
+            outputImageContainer.appendChild(container);
+            outputImageContainer.appendChild(indicator);
+            
+            // 监听滚动更新页码指示器
+            container.addEventListener('scroll', () => {
+                const dots = indicator.querySelectorAll('.page-dot');
+                const imgs = container.querySelectorAll('img');
+                const scrollLeft = container.scrollLeft;
+                
+                imgs.forEach((img, index) => {
+                    if (Math.abs(img.offsetLeft - scrollLeft) < img.width / 2) {
+                        dots.forEach(dot => dot.classList.remove('active'));
+                        dots[index].classList.add('active');
+                    }
+                });
+            });
+        } else {
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = '生成的文本图像';
+            outputImageContainer.appendChild(img);
+        }
 
         // 添加下载按钮
         const downloadBtn = document.createElement('a');
-        downloadBtn.href = imageUrl;
+        downloadBtn.href = Array.isArray(imageUrl) ? imageUrl[0] : imageUrl;
         downloadBtn.download = 'text-image.png';
         downloadBtn.textContent = '下载图像';
         downloadBtn.className = 'download-btn';
@@ -193,11 +319,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const outputModeBtn = document.getElementById('outputModeBtn');
     const modePanel = document.querySelector('.mode-panel');
     const modeOptions = document.querySelectorAll('.mode-option');
-    let currentMode = 'vertical';
+    let currentMode = 'vertical'; // 默认垂直模式
     
     // 更新按钮文本显示当前模式
     const updateModeBtnText = () => {
-        const modeText = currentMode === 'vertical' ? '手机模式 📱' : '电脑模式 🖥️';
+        let modeText;
+        switch(currentMode) {
+            case 'vertical':
+                modeText = '手机模式 📱';
+                break;
+            case 'horizontal':
+                modeText = '电脑模式 🖥️';
+                break;
+            case 'xiaohongshu':
+                modeText = '小红书模式 📖';
+                break;
+            default:
+                modeText = '手机模式 📱';
+        }
         outputModeBtn.textContent = `${modeText} ▼`;
     };
     
@@ -257,5 +396,139 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingElement.classList.add('hidden');
             convertButton.disabled = false;
         }
+    });
+
+    // 小红书模式的独立实现
+    const XHSMode = {
+        init() {
+            // 创建小红书专用的隐藏容器
+            const container = document.createElement('div');
+            container.id = 'xhsContainer';
+            container.className = 'xhs-container';
+            document.body.appendChild(container);
+        },
+
+        /**
+         * 计算内容高度
+         * @param {string} html 
+         * @returns {number}
+         */
+        calculateHeight(html) {
+            const div = document.createElement('div');
+            div.className = 'xhs-paper';
+            div.innerHTML = html;
+            div.style.position = 'absolute';
+            div.style.visibility = 'hidden';
+            document.body.appendChild(div);
+            const height = div.scrollHeight;
+            document.body.removeChild(div);
+            return height;
+        },
+
+        /**
+         * 分页处理
+         * @param {string} html 
+         * @returns {string[]}
+         */
+        splitPages(html) {
+            const maxHeight = 720;
+            const pages = [];
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const elements = Array.from(doc.body.children);
+            
+            let currentPage = '';
+            let currentHeight = 0;
+            
+            for (const element of elements) {
+                const elementHtml = element.outerHTML;
+                const elementHeight = this.calculateHeight(elementHtml);
+                
+                if (currentHeight + elementHeight > maxHeight) {
+                    if (currentPage) pages.push(currentPage);
+                    currentPage = elementHtml;
+                    currentHeight = elementHeight;
+                } else {
+                    currentPage += elementHtml;
+                    currentHeight += elementHeight;
+                }
+            }
+            
+            if (currentPage) pages.push(currentPage);
+            return pages;
+        },
+
+        /**
+         * 生成图片
+         * @param {string} html 
+         * @returns {Promise<string>}
+         */
+        async generateImage(html) {
+            const container = document.getElementById('xhsContainer');
+            container.innerHTML = `<div class="xhs-paper">${html}</div>`;
+
+            try {
+                const canvas = await html2canvas(container, {
+                    width: 440,
+                    height: 840,
+                    scale: 2,
+                    backgroundColor: '#E3F2FD',
+                    logging: false,
+                });
+                return canvas.toDataURL('image/png');
+            } finally {
+                container.innerHTML = '';
+            }
+        },
+
+        /**
+         * 显示预览
+         * @param {string[]} images 
+         * @param {HTMLElement} container 
+         */
+        showPreview(images, container) {
+            const preview = document.createElement('div');
+            preview.className = 'xhs-preview';
+
+            const indicator = document.createElement('div');
+            indicator.className = 'xhs-indicator';
+
+            images.forEach((url, index) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `第 ${index + 1} 页`;
+                preview.appendChild(img);
+
+                const dot = document.createElement('div');
+                dot.className = `xhs-dot ${index === 0 ? 'active' : ''}`;
+                dot.addEventListener('click', () => {
+                    preview.scrollTo({
+                        left: img.offsetLeft,
+                        behavior: 'smooth'
+                    });
+                });
+                indicator.appendChild(dot);
+            });
+
+            preview.addEventListener('scroll', () => {
+                const scrollLeft = preview.scrollLeft;
+                const dots = indicator.querySelectorAll('.xhs-dot');
+                preview.querySelectorAll('img').forEach((img, index) => {
+                    if (Math.abs(img.offsetLeft - scrollLeft) < img.width / 2) {
+                        dots.forEach(dot => dot.classList.remove('active'));
+                        dots[index].classList.add('active');
+                    }
+                });
+            });
+
+            container.innerHTML = '';
+            container.appendChild(preview);
+            container.appendChild(indicator);
+        }
+    };
+
+    // 初始化小红书模式
+    document.addEventListener('DOMContentLoaded', () => {
+        XHSMode.init();
     });
 });
